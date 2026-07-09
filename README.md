@@ -23,6 +23,16 @@
 - 🌐 一键翻译：项目描述英译中
 - 🔗 直达 GitHub 项目页
 
+## 截图
+
+### 排行
+
+![排行 Tab](docs/screenshots/rank-tab.png)
+
+### 趋势
+
+![趋势 Tab](docs/screenshots/trend-tab.png)
+
 ## 项目结构
 
 ```
