@@ -33,8 +33,9 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans 
 .list-header .sub{font-size:14px;color:#8b949e;font-weight:450}
 
 /* === 照片卡片网格 === */
-.project-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-bottom:40px}
-.project-card{background:#161b22;border-radius:18px;border:1px solid #30363d;overflow:hidden;transition:.18s;display:flex;flex-direction:column}
+.project-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:40px;grid-auto-flow:row}
+.project-grid>*{min-width:0;max-width:100%}
+.project-card{background:#161b22;border-radius:18px;border:1px solid #30363d;overflow:hidden;transition:.18s;display:flex;flex-direction:column;min-width:0;max-width:100%}
 .project-card:hover{border-color:#58a6ff;box-shadow:0 6px 24px rgba(0,0,0,.3);transform:translateY(-2px)}
 .card-cover{background:linear-gradient(135deg,#1a1f2e,#21262d);padding:20px 24px 16px;display:flex;align-items:flex-start;justify-content:flex-end;gap:12px;border-bottom:1px solid #21262d;position:relative;overflow:hidden}
 .card-cover::before{content:attr(data-rank);position:absolute;left:20px;top:12px;font-size:48px;font-weight:900;color:#21262d;line-height:1;-webkit-text-stroke:1px #30363d;pointer-events:none;user-select:none;z-index:0}
@@ -47,10 +48,10 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans 
 .card-cover .cover-info .lang-row{display:flex;gap:5px}
 .card-cover .cover-info .lang-tag{font-size:11px;font-weight:500;background:rgba(88,166,255,.1);color:#58a6ff;padding:2px 12px;border-radius:30px;line-height:20px}
 .card-body{padding:20px 24px;flex:1;display:flex;flex-direction:column;gap:12px}
-.card-body .nm{font-size:17px;font-weight:700;color:#e6edf3;line-height:1.3}
+.card-body .nm{font-size:17px;font-weight:700;color:#e6edf3;line-height:1.3;overflow-wrap:break-word;word-break:break-word}
 .card-body .nm a{color:#e6edf3;text-decoration:none}
 .card-body .nm a:hover{color:#58a6ff}
-.card-body .desc{font-size:14px;color:#8b949e;line-height:1.6;flex:1}
+.card-body .desc{font-size:14px;color:#8b949e;line-height:1.6;flex:1;overflow-wrap:break-word;word-break:break-word;min-width:0}
 .card-body .desc .trl{font-size:10px;color:#484f58;cursor:pointer;margin-left:4px;opacity:0;transition:opacity .15s}
 .project-card:hover .trl{opacity:1}
 .card-body .desc .trl:hover{color:#58a6ff}
@@ -83,7 +84,6 @@ body{font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans 
 @media(max-width:900px){
   .project-grid{grid-template-columns:1fr;gap:14px}
   .card-cover{padding:16px 20px 14px}
-  .card-cover .rank{font-size:34px}
   .card-cover .cover-info .stars{font-size:22px}
   .card-body{padding:16px 20px}
   .card-ft{padding:10px 20px 14px}
@@ -132,6 +132,7 @@ function $(s,p){return(p||document).querySelector(s)}
 function $$(s,p){return[...(p||document).querySelectorAll(s)]}
 function fm(n){if(!n)return'0';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'k';return n.toLocaleString()}
 function fmN(n){return n?n.toLocaleString():'0'}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function tagC(t){if(t.includes('🏛️'))return'highlight';if(t.includes('🔥')||t.includes('📈'))return'highlight';return''}
 var D=null,origTexts={},txtId=0;
 
@@ -139,9 +140,10 @@ $$('#navTabs span').forEach(function(b){b.onclick=function(){$$('#navTabs span')
 
 async function init(){try{var r1=await fetch('/api/dates');var d1=await r1.json();if(!d1.dates.length){$('#app').innerHTML='<div class="error">❌ 无数据</div>';return}var sel=$('#dateBadge');d1.dates.forEach(function(d){sel.innerHTML+='<option value="'+d+'">'+d+'</option>'});sel.value=d1.latest;sel.onchange=function(){ld(this.value)};await ld(d1.latest)}catch(e){$('#app').innerHTML='<div class="error">❌ 无法连接服务器</div>'}}
 
-async function ld(d){$('#app').innerHTML='<div class="loading">加载中...</div>';$('#dateBadge').value=d;try{var r2=await fetch('/api/report?date='+d);D=await r2.json();if(D.error){$('#app').innerHTML='<div class="error">❌ '+D.error+'</div>';return}render();setTimeout(function(){autoTL()},500);setTimeout(function(){autoTL()},2000)}catch(e){$('#app').innerHTML='<div class="error">❌ 加载失败</div>'}}
+async function ld(d){$('#app').innerHTML='<div class="loading">加载中...</div>';$('#dateBadge').value=d;try{var r2=await fetch('/api/report?date='+d);D=await r2.json();if(D.error){$('#app').innerHTML='<div class="error">❌ '+D.error+'</div>';return}render();setTimeout(function(){autoTL()},300)}catch(e){$('#app').innerHTML='<div class="error">❌ 加载失败</div>'}}
 
-function autoTL(){$$('.project-card .trl').forEach(function(b,i){if(b.classList.contains('done'))return;setTimeout(function(){tr(b,true)},i*300)})}
+function autoTL(){$$('.project-card .trl').forEach(function(b,i){if(b.classList.contains('done'))return;setTimeout(function(){tr(b,true)},i*200)});$$('.td-desc').forEach(function(td,i){if(td.classList.contains('done'))return;setTimeout(function(){trTd(td)},i*200)})}
+async function trTd(td){var id=parseInt(td.dataset.id),orig=origTexts[id];if(!orig||orig.length<10)return;try{var t=orig.substring(0,500).replace(/\n/g,' ');var r=await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-CN&dt=t&q='+encodeURIComponent(t));var data=await r.json();if(data&&data[0]&&data[0].length>0){var s='';for(var i=0;i<data[0].length;i++){if(data[0][i]&&data[0][i][0])s+=data[0][i][0]}if(s.length>5){td.textContent=s;td.classList.add('done')}}}catch(e){}}
 
 function topClass(i){if(i===0)return'top1';if(i===1)return'top2';if(i===2)return'top3';return''}
 
@@ -170,7 +172,7 @@ function render(){
     h+='</div>';
     h+='<div class="card-body">';
     h+='<div class="nm"><a href="https://github.com/'+(c.display_name||c.repo)+'" target="_blank">'+(c.display_name||c.repo)+'</a></div>';
-    h+='<div class="desc">'+desc.substring(0,250)+' <span class="trl" onclick="tr(this)" data-id="'+id+'">🌐</span></div>';
+    h+='<div class="desc">'+esc(desc).substring(0,400)+' <span class="trl" onclick="tr(this)" data-id="'+id+'">🌐</span></div>';
     h+='<div class="card-meta">';
     if(extra.license)h+='<span class="stat">📄 '+extra.license+'</span>';
     if(extra.contributors)h+='<span class="stat">👥 '+extra.contributors+'</span>';
@@ -187,13 +189,13 @@ function render(){
 
   h+='<div class="list-header" style="margin-top:40px"><h2>🚀 涨势榜 Top 10</h2><span class="sub">今日新增 Star 最多的项目</span></div>';
   h+='<table class="tbl2" style="table-layout:fixed"><colgroup><col style="width:36px"><col style="width:210px"><col style="width:100px"><col style="width:100px"><col style="width:130px"><col></colgroup><tr><th>#</th><th>项目</th><th>今日新增</th><th>总星标</th><th>分类</th><th>描述</th></tr>';
-  d.rising.forEach(function(c,i){h+='<tr><td class="n">'+(i+1)+'</td><td style="word-break:break-all;line-height:1.4;padding-top:8px;padding-bottom:8px"><a href="https://github.com/'+(c.display_name||c.repo)+'" target="_blank">'+(c.display_name||c.repo)+'</a></td><td class="g">+'+fmN(c.stars_today||0)+'</td><td class="s">'+fmN(c.stars_total||0)+'</td><td><span class="label">'+(c.type||'?')+'</span></td><td style="color:#8b949e;line-height:1.5;padding-top:8px;padding-bottom:8px">'+(c.desc||'')+'</td></tr>'});
+  d.rising.forEach(function(c,i){var did=txtId++;origTexts[did]=c.desc||'';h+='<tr><td class="n">'+(i+1)+'</td><td style="word-break:break-all;line-height:1.4;padding-top:8px;padding-bottom:8px"><a href="https://github.com/'+(c.display_name||c.repo)+'" target="_blank">'+(c.display_name||c.repo)+'</a></td><td class="g">+'+fmN(c.stars_today||0)+'</td><td class="s">'+fmN(c.stars_total||0)+'</td><td><span class="label">'+(c.type||'?')+'</span></td><td class="td-desc" data-id="'+did+'" style="color:#8b949e;line-height:1.5;padding-top:8px;padding-bottom:8px">'+esc(c.desc||'')+'</td></tr>'});
   h+='</table>';
   h+='</div>';
 
   h+='<div class="tab-content" data-t="trend">';
-  if(d.continuing&&d.continuing.length>0){h+='<div class="list-header"><h2>👀 持续关注</h2><span class="sub">连续上榜的项目</span></div>';h+='<table class="tbl2" style="table-layout:fixed"><colgroup><col style="width:36px"><col style="width:210px"><col style="width:100px"><col style="width:100px"><col style="width:80px"><col></colgroup><tr><th>#</th><th>项目</th><th>昨日 ⭐</th><th>今日 ⭐</th><th>日增</th><th>描述</th></tr>';d.continuing.forEach(function(c,i){h+='<tr><td class="n">'+(i+1)+'</td><td style="word-break:break-all;line-height:1.4;padding-top:8px;padding-bottom:8px"><a href="https://github.com/'+c.repo+'" target="_blank">'+c.name+'</a></td><td class="s">'+fmN(c.yesterday)+'</td><td class="s">'+fmN(c.today)+'</td><td class="g">+'+fmN(c.increase)+'</td><td style="color:#8b949e;line-height:1.5;padding-top:8px;padding-bottom:8px">'+(c.desc||'')+'</td></tr>'});h+='</table>'}
-  if(d.weekly&&d.weekly.length>0){h+='<div class="list-header" style="margin-top:32px"><h2>📈 本周增速</h2><span class="sub">7 天 Star 增量排名</span></div>';h+='<table class="tbl2" style="table-layout:fixed"><colgroup><col style="width:36px"><col style="width:210px"><col style="width:100px"><col style="width:100px"><col style="width:80px"><col style="width:60px"><col></colgroup><tr><th>#</th><th>项目</th><th>7 天前</th><th>今日</th><th>增量</th><th>追踪</th><th>描述</th></tr>';d.weekly.forEach(function(c,i){h+='<tr><td class="n">'+(i+1)+'</td><td style="word-break:break-all;line-height:1.4;padding-top:8px;padding-bottom:8px"><a href="https://github.com/'+c.repo+'" target="_blank">'+c.name+'</a></td><td class="s">'+fmN(c.past)+'</td><td class="s">'+fmN(c.current)+'</td><td class="g">+'+fmN(c.increase)+'</td><td><span class="label highlight">'+c.days_tracked+'天</span></td><td style="color:#8b949e;line-height:1.5;padding-top:8px;padding-bottom:8px">'+(c.desc||'')+'</td></tr>'});h+='</table>'}
+  if(d.continuing&&d.continuing.length>0){h+='<div class="list-header"><h2>👀 持续关注</h2><span class="sub">连续上榜的项目</span></div>';h+='<table class="tbl2" style="table-layout:fixed"><colgroup><col style="width:36px"><col style="width:210px"><col style="width:100px"><col style="width:100px"><col style="width:80px"><col></colgroup><tr><th>#</th><th>项目</th><th>昨日 ⭐</th><th>今日 ⭐</th><th>日增</th><th>描述</th></tr>';d.continuing.forEach(function(c,i){var did=txtId++;origTexts[did]=c.desc||'';h+='<tr><td class="n">'+(i+1)+'</td><td style="word-break:break-all;line-height:1.4;padding-top:8px;padding-bottom:8px"><a href="https://github.com/'+c.repo+'" target="_blank">'+c.name+'</a></td><td class="s">'+fmN(c.yesterday)+'</td><td class="s">'+fmN(c.today)+'</td><td class="g">+'+fmN(c.increase)+'</td><td class="td-desc" data-id="'+did+'" style="color:#8b949e;line-height:1.5;padding-top:8px;padding-bottom:8px">'+esc(c.desc||'')+'</td></tr>'});h+='</table>'}
+  if(d.weekly&&d.weekly.length>0){h+='<div class="list-header" style="margin-top:32px"><h2>📈 本周增速</h2><span class="sub">7 天 Star 增量排名</span></div>';h+='<table class="tbl2" style="table-layout:fixed"><colgroup><col style="width:36px"><col style="width:210px"><col style="width:100px"><col style="width:100px"><col style="width:80px"><col style="width:60px"><col></colgroup><tr><th>#</th><th>项目</th><th>7 天前</th><th>今日</th><th>增量</th><th>追踪</th><th>描述</th></tr>';d.weekly.forEach(function(c,i){var did=txtId++;origTexts[did]=c.desc||'';h+='<tr><td class="n">'+(i+1)+'</td><td style="word-break:break-all;line-height:1.4;padding-top:8px;padding-bottom:8px"><a href="https://github.com/'+c.repo+'" target="_blank">'+c.name+'</a></td><td class="s">'+fmN(c.past)+'</td><td class="s">'+fmN(c.current)+'</td><td class="g">+'+fmN(c.increase)+'</td><td><span class="label highlight">'+c.days_tracked+'天</span></td><td class="td-desc" data-id="'+did+'" style="color:#8b949e;line-height:1.5;padding-top:8px;padding-bottom:8px">'+esc(c.desc||'')+'</td></tr>'});h+='</table>'}
   if(d.type_distribution&&d.type_distribution.length>0){h+='<div class="list-header" style="margin-top:32px"><h2>📊 类型分布</h2><span class="sub">今日追踪项目的分类统计</span></div>';h+='<table class="tbl2"><tr><th style="width:36px">#</th><th>类型</th><th style="width:100px">数量</th><th style="width:120px">占比</th></tr>';var tt=d.total||1;d.type_distribution.forEach(function(t,i){h+='<tr><td class="n">'+(i+1)+'</td><td>'+t[0]+'</td><td class="s">'+t[1]+'</td><td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;max-width:120px;height:6px;background:#21262d;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+(t[1]/tt*100).toFixed(1)+'%;background:linear-gradient(90deg,#58a6ff,#a371f7);border-radius:3px"></div></div><span style="font-size:12px;color:#8b949e">'+(t[1]/tt*100).toFixed(1)+'%</span></div></td></tr>'});h+='</table>'}
 if(d.lang_distribution&&d.lang_distribution.length>0){h+='<div class="list-header" style="margin-top:32px"><h2>🔤 语言分布</h2><span class="sub">按编程语言统计</span></div>';h+='<table class="tbl2"><tr><th style="width:36px">#</th><th>语言</th><th style="width:100px">数量</th><th style="width:120px">占比</th></tr>';d.lang_distribution.forEach(function(t,i){h+='<tr><td class="n">'+(i+1)+'</td><td>'+t[0]+'</td><td class="s">'+t[1]+'</td><td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;max-width:120px;height:6px;background:#21262d;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+(t[1]/tt*100).toFixed(1)+'%;background:linear-gradient(90deg,#3fb950,#56d364);border-radius:3px"></div></div><span style="font-size:12px;color:#8b949e">'+(t[1]/tt*100).toFixed(1)+'%</span></div></td></tr>'});h+='</table>'}
   h+='</div>';
@@ -207,9 +209,10 @@ if(d.lang_distribution&&d.lang_distribution.length>0){h+='<div class="list-heade
 
 async function tr(btn,auto){
   var card=btn.closest('.project-card'),desc=card.querySelector('.desc');
+  if(!desc)return;
   var id=parseInt(btn.dataset.id),orig=origTexts[id];
   if(!orig||orig.length<10)return;
-  if(btn.classList.contains('done')){desc.textContent=orig;btn.classList.remove('done');btn.textContent='🌐';return}
+  if(btn.classList.contains('done')){desc.textContent=orig.substring(0,400);btn.classList.remove('done');btn.textContent='🌐';return}
   if(!auto)btn.textContent='...';
   try{var t=orig.substring(0,500).replace(/\n/g,' ');var r=await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-CN&dt=t&q='+encodeURIComponent(t));var data=await r.json();if(data&&data[0]&&data[0].length>0){var s='';for(var i=0;i<data[0].length;i++){if(data[0][i]&&data[0][i][0])s+=data[0][i][0]}if(s.length>5){desc.textContent=s;btn.classList.add('done');btn.textContent='↺'}}}catch(e){if(!auto)btn.textContent='🌐'}
 }

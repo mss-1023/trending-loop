@@ -79,6 +79,9 @@ class APIHandler(SimpleHTTPRequestHandler):
             with open(candidates_path) as f:
                 candidates = json.load(f)
 
+        # Enrich descriptions
+        self._enrich_descriptions(candidates)
+
         # Build comprehensive report
         return {
             "date": report_date,
@@ -114,6 +117,50 @@ class APIHandler(SimpleHTTPRequestHandler):
         if unknown > 0:
             result.append(("未知", unknown))
         return result
+
+    def _enrich_descriptions(self, candidates):
+        """Build richer descriptions from available data sources."""
+        import re
+        for c in candidates:
+            desc = c.get("desc", "")
+            about = (c.get("extra") or {}).get("about", "")
+            readme = c.get("readme_intro", "")
+            features = c.get("features", [])
+
+            parts = []
+
+            # Primary: GitHub description
+            if desc and len(desc) > 10:
+                parts.append(desc.strip())
+
+            # Secondary: about (if different from desc)
+            if about and about.strip() != desc.strip() and len(about) > 10:
+                parts.append(about.strip())
+
+            # Tertiary: clean README intro (first paragraph)
+            if readme:
+                # Strip markdown artifacts
+                clean = re.sub(r'!\[.*?\]\(.*?\)', '', readme)  # images
+                clean = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', clean)  # links
+                clean = re.sub(r'<[^>]+>', '', clean)  # HTML tags
+                clean = re.sub(r'#{1,6}\s*', '', clean)  # headings
+                clean = re.sub(r'\n{3,}', '\n\n', clean)  # excessive newlines
+                clean = clean.strip()
+                if clean and len(clean) > 20:
+                    parts.append(clean)
+
+            # Quaternary: features (meaningful bullets)
+            for f in features[:3]:
+                f_clean = re.sub(r'<[^>]+>', '', f)  # strip HTML tags
+                f_clean = re.sub(r'[#*>\-\[\]()"]', '', f_clean).strip()
+                if f_clean and len(f_clean) > 15 and len(f_clean) < 200:
+                    parts.append(f_clean)
+
+            # Build final description
+            if parts:
+                combined = " | ".join(parts)
+                c["desc"] = combined[:600]
+                c["readme_intro"] = combined[:600]
 
     def _get_desc(self, candidates, repo):
         for c in candidates:
